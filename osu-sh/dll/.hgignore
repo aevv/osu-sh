@@ -1,0 +1,6 @@
+syntax:glob
+x64
+Win32
+ipch
+Release
+*.sdf
