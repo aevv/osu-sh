@@ -1,3 +1,4 @@
+#define _WIN32_WINNT _WIN32_WINNT_WINXP
 #include "stdafx.h"
 #include <stdio.h>
 #include <TlHelp32.h>
@@ -19,9 +20,10 @@ int getProc() {
         pe32.dwSize = sizeof(PROCESSENTRY32);
         if(Process32First(hSnapshot,&pe32)) {
             do {
-				
 			   if (wcscmp(pe32.szExeFile, L"osu!.exe")==0)
+			   {
 				   return pe32.th32ProcessID;
+			   }
             } while(Process32Next(hSnapshot,&pe32));
          }
          CloseHandle(hSnapshot);
@@ -76,6 +78,10 @@ int init()
 	int id;
 	id = getProc();
 	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE,id);
+	if (hProcess == NULL)
+	{
+		return -1;
+	}
 	if (hProcess == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "cannot open that pid\n");

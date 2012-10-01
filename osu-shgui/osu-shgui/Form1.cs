@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Globalization;
 
 namespace osu_shgui
 {
@@ -18,6 +19,7 @@ namespace osu_shgui
         private double speed = 1;
         [DllImport("injector.dll")]
         private static extern int init();
+        IFormatProvider f = new CultureInfo("en-US");
 
         public Form1()
         {
@@ -30,7 +32,6 @@ namespace osu_shgui
 
             using (StreamReader sr = new StreamReader(fs))
             {
-                GC.Collect();
                 string line = "";
                 int countlol = 0;
                 dllName = sr.ReadLine();
@@ -39,7 +40,7 @@ namespace osu_shgui
                 {
                     bool result = false;
                     double result2 = 0;
-                    if (double.TryParse(line, out result2))
+                    if (double.TryParse(line, NumberStyles.AllowDecimalPoint, f, out result2))
                     {
                         if (!got)
                         {
@@ -152,7 +153,8 @@ namespace osu_shgui
             using (StreamWriter sw = new StreamWriter("settings.ini", false))
             {
                 sw.WriteLine(dir);
-                sw.WriteLine(speed);
+                string s = Convert.ToString(speed, f);
+                sw.WriteLine(s);
                 sw.WriteLine(doubletime);
                 sw.WriteLine(halftime);
                 sw.Close();
@@ -201,7 +203,7 @@ namespace osu_shgui
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
             double res = 0;
-            if (double.TryParse(textBox1.Text, out res))
+            if (double.TryParse(textBox1.Text, NumberStyles.AllowDecimalPoint, f, out res))
             {
                 speed = res;
             }
