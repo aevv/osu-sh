@@ -9,17 +9,21 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace osu_shgui
 {
     public partial class Form1 : Form
     {
         private string dllName = "";
-        private bool nomod, halftime, doubletime;
+        private bool nomod, halftime, doubletime, injected = false;
         private double speed = 1;
-        [DllImport("injector.dll")]
-        private static extern int init();
         IFormatProvider f = new CultureInfo("en-US");
+        Process osu = null;
+        Injector i = new Injector();
+        DLLInformation hook = null;
+        [DllImport("psapi.dll")]
+        static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In] [MarshalAs(UnmanagedType.U4)] int nSize);
 
         public Form1()
         {
@@ -70,6 +74,19 @@ namespace osu_shgui
             radioButton1.Checked = nomod;
             radioButton2.Checked = doubletime;
             radioButton3.Checked = halftime;
+            Process[] procs = Process.GetProcesses();
+            foreach (Process p in procs)
+            {
+                if (p.ProcessName == "osu!")
+                {
+                    osu = p;
+                }
+            }
+            if (osu == null)
+            {
+                MessageBox.Show("osu not found, closing");
+                Environment.Exit(0);
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -79,33 +96,42 @@ namespace osu_shgui
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (speed > 1.9)
+            if (!injected)
             {
-                MessageBox.Show("speed must be below 1.9");
-                speed = 1.9;
-            }
-            if (speed < 0.1)
-            {
-                MessageBox.Show("speed must be above 0.1");
-                speed = 0.1;
-            }
-            write();
-            int code = 8;
-            try
-            {
-                code = init();
-            }
-            catch
-            {
-                MessageBox.Show(getError(code));
-            }
-            if (code != 0)
-            {
-                MessageBox.Show(getError(code));
+                if (speed > 1.9)
+                {
+                    MessageBox.Show("speed must be below 1.9");
+                    speed = 1.9;
+                }
+                if (speed < 0.1)
+                {
+                    MessageBox.Show("speed must be above 0.1");
+                    speed = 0.1;
+                }
+                write();
+                int code = 8;
+                try
+                {
+                    hook = i.inject(osu.Id, dllName);
+                    code = hook.ErrorCode;
+                }
+                catch
+                {
+                    MessageBox.Show(getError(code));
+                }
+                if (code != 0)
+                {
+                    MessageBox.Show(getError(code));
+                }
+                else
+                {
+                    injected = true;
+                }
             }
             else
             {
-                Environment.Exit(0);
+                button2_Click(null, null);
+                button1_Click(null, null);
             }
         }
         private string getError(int code)
@@ -159,6 +185,8 @@ namespace osu_shgui
                 sw.WriteLine(halftime);
                 sw.Close();
             }
+            string s2 = osu.MainModule.FileName;
+            File.Copy("settings.ini", s2.Substring(0, s2.Length - 9) + "\\settings.cfg", true);
         }
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
@@ -206,6 +234,15 @@ namespace osu_shgui
             if (double.TryParse(textBox1.Text, NumberStyles.AllowDecimalPoint, f, out res))
             {
                 speed = res;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (injected)
+            {
+                i.unject(hook);
+                injected = false;
             }
         }
     }

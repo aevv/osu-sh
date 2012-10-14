@@ -135,7 +135,6 @@ INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved)
 				baseTicks = pOrigTick();
 				pOrigQuery(&basePerf);		
 			}
-			MessageBoxA(NULL,"Injection success", "Info", MB_ICONEXCLAMATION);
 		}
 		break;
 	case DLL_PROCESS_DETACH:
