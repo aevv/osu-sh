@@ -31,9 +31,9 @@ namespace osu_shgui
             FileStream fs;
             if (!File.Exists("settings.ini"))
                 fs = File.Create("settings.ini");
-            else
+            else            
                 fs = new FileStream("settings.ini", FileMode.Open);
-
+            
             using (StreamReader sr = new StreamReader(fs))
             {
                 string line = "";
@@ -112,6 +112,22 @@ namespace osu_shgui
                 int code = 8;
                 try
                 {
+                    if (osu.HasExited)
+                    {
+                        Process[] procs = Process.GetProcesses();
+                        foreach (Process p in procs)
+                        {
+                            if (p.ProcessName == "osu!")
+                            {
+                                osu = p;
+                            }
+                        }
+                        if (osu.HasExited)
+                        {
+                            MessageBox.Show("No osu! process found");
+                            return;
+                        }
+                    }
                     hook = i.inject(osu.Id, dllName);
                     code = hook.ErrorCode;
                 }
@@ -185,8 +201,11 @@ namespace osu_shgui
                 sw.WriteLine(halftime);
                 sw.Close();
             }
-            string s2 = osu.MainModule.FileName;
-            File.Copy("settings.ini", s2.Substring(0, s2.Length - 9) + "\\settings.cfg", true);
+            if (!osu.HasExited)
+            {
+                string s2 = osu.MainModule.FileName;
+                File.Copy("settings.ini", s2.Substring(0, s2.Length - 9) + "\\settings.cfg", true);
+            }
         }
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
